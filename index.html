@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0F7B6C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 <title>حروف يوسف</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -52,6 +56,7 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 .opt.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .opt.no{animation:shake .35s;border-color:var(--no)}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.dl{text-decoration:none;font-size:18px}
 .row{display:flex;gap:10px}.row>*{flex:1}
 .win{text-align:center;font-size:24px;font-weight:800;color:var(--ok)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -85,7 +90,7 @@ const app = document.getElementById('app');
 let voice = null;
 const pick = () => { try { const v = speechSynthesis.getVoices(); voice = v.find(x => /^en[-_]US/i.test(x.lang)) || v.find(x => /^en/i.test(x.lang)) || null; } catch (e) {} };
 try { pick(); speechSynthesis.onvoiceschanged = pick; } catch (e) {}
-function speak(t, rate = .75) { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); if (voice) u.voice = voice; u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u); } catch (e) {} }
+function speak(t, rate = .75) { const C = window.Capacitor?.Plugins?.TextToSpeech; if (C) { C.stop?.().catch?.(() => {}); C.speak({ text: t, lang: 'en-US', rate: rate * 1.1, volume: 1, category: 'ambient' }).catch(() => {}); return; } try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); if (voice) u.voice = voice; u.lang = 'en-US'; u.rate = rate; speechSynthesis.speak(u); } catch (e) {} }
 const sayLetter = x => speak(x.U + '.', .7);
 const sayAll = x => { sayLetter(x); setTimeout(() => speak(x.w, .75), 1100); };
 let AC; function beep(ok) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime; (ok ? [660, 880, 1175] : [260]).forEach((f, k) => { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = f; o.type = 'triangle'; g.gain.setValueAtTime(.0001, t + k * .09); g.gain.exponentialRampToValueAtTime(.15, t + k * .09 + .02); g.gain.exponentialRampToValueAtTime(.0001, t + k * .09 + .25); o.connect(g); g.connect(AC.destination); o.start(t + k * .09); o.stop(t + k * .09 + .3); }); } catch (e) {} }
@@ -99,6 +104,7 @@ function home() {
     <div class="bar"><i style="width:${done / 26 * 100}%"></i></div>
     ${next ? `<button class="big" id="go">▶️ ${done ? 'الحرف الجاي' : 'يلا نبلّش'}: <span class="en">${next.U}</span></button>` : ''}
     ${done >= 3 ? `<button class="big sun" id="game">🎮 لعبة مراجعة</button>` : ''}
+    ${window.Capacitor ? '' : `<a class="big ghost dl" href="https://github.com/mhoaltanany-max/yousef-chat/releases/latest/download/yousef-abc.apk">📲 نزّل التطبيق على الجوال (أندرويد)</a>`}
     <div class="board">${L.map((x, k) => `<button class="tile ${k < S.n ? '' : k === S.n ? 'next' : 'lock'}" data-k="${k}" aria-label="${x.U}">${x.U}</button>`).join('')}</div>`;
   const go = document.getElementById('go'); if (go) go.onclick = () => lesson(S.n);
   const g = document.getElementById('game'); if (g) g.onclick = () => review();
@@ -177,6 +183,7 @@ function review() {
 
 home();
 })();
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 
 </body>
